@@ -1,0 +1,9 @@
+
+**/*.pt
+**/*.pth
+**/.jpg
+weather_classification_bdd100k/**
+birds-525-species/**
+**/__pycache__/**
+**/.DS_Store
+**/.neptune/**
