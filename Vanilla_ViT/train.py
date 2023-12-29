@@ -78,7 +78,7 @@ def main():
 
     try:
         print("Attempting to load from checkpoint...")
-        torch.load_state_dict(torch.load(f"{cfg.MODEL_SAVE_FOLDER}model.pth"))
+        MODEL.load_state_dict(torch.load(f"{cfg.MODEL_SAVE_FOLDER}model.pth"))
         print("Load successful!")
     except Exception as err:
         print("Load failed: ", err)
