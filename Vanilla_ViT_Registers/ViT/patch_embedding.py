@@ -17,7 +17,7 @@ class PatchEmbedding(nn.Module):
     '''
 
 
-    def __init__(self, image_height=224, image_width=224, image_channel=3, patch_size=16, register_token=8, device='cpu'):
+    def __init__(self, image_height=224, image_width=224, image_channel=3, patch_size=16, register_token_len=8, device='cpu'):
         '''Param init.
         '''
         super(PatchEmbedding, self).__init__()
@@ -26,6 +26,7 @@ class PatchEmbedding(nn.Module):
         self.image_width = image_width
         self.image_channel = image_channel
         self.patch_size = patch_size
+        self.register_token_len = register_token_len
         self.patch_embedding_dim = patch_size * patch_size * image_channel
         self.device = device
 
@@ -41,20 +42,25 @@ class PatchEmbedding(nn.Module):
 
         return self.patch_linear_module(patched_image_tensors)
 
-    def cls_token_concat(self, linear_projected_tensors):
+    def cls_and_register_token_concat(self, linear_projected_tensors):
         '''Receives the image patches that has been linearly projected and appends a learnable parameter tensor at the start of the input tensor.
 
         Input:
             patched_image_tensors -- A tensor of shape [batch size, total number of patches, a single flattened image dimension].
         '''
         batch_size = linear_projected_tensors.size(0)
-
+        
+        #init cls and register tokens.
         cls_token = nn.Parameter(torch.randn(1, 1, self.patch_embedding_dim)).to(self.device)
+        register_token = nn.Parameter(torch.randn(1, self.register_token_len, self.patch_embedding_dim)).to(self.device)
+
+
         batched_cls_token = einops.repeat(cls_token, '() n e -> b n e', b=batch_size)
+        batched_register_token = einops.repeat(register_token, '() n e -> b n e', b=batch_size)
 
-        cls_concat_tensor = torch.cat([batched_cls_token, linear_projected_tensors], dim=1)
+        cls_register_concat_tensor = torch.cat([batched_cls_token, batched_register_token, linear_projected_tensors], dim=1)
 
-        return cls_concat_tensor
+        return cls_register_concat_tensor
 
 
     def get_non_overlapping_patches(self, inp):
@@ -85,19 +91,19 @@ class PatchEmbedding(nn.Module):
         patched_image_tensors = self.get_non_overlapping_patches(inp=batched_tensor_images)
         linear_projected_tensors = self.linear_projection_patches(patched_image_tensors=patched_image_tensors)
 
-        cls_token_concat_tensors = self.cls_token_concat(linear_projected_tensors=linear_projected_tensors)
+        cls_register_token_concat_tensors = self.cls_and_register_token_concat(linear_projected_tensors=linear_projected_tensors)
 
-        positional_encoding_module = PositionalEncoder(token_length=cls_token_concat_tensors.size(1),                        output_dim=cls_token_concat_tensors.size(2), n=1000, device=self.device)
+        positional_encoding_module = PositionalEncoder(token_length=cls_register_token_concat_tensors.size(1), output_dim=cls_register_token_concat_tensors.size(2), n=1000, device=self.device)
         positional_encoding_tensor = positional_encoding_module() #tensor of size [num_patches+1, flattened image patch dimension]
 
-        #in order to perform element-wise addition to the projected tensor with the CLS token, we're gonna have to stack up the positional encoding for every element in the batch.
+        #in order to perform element-wise addition to the projected tensor with the CLS tand register oken, we're gonna have to stack up the positional encoding for every element in the batch.
         #stacked_pos_enc_tensor = positional_encoding_tensor.unsqueeze(0).repeat_interleave(cls_token_concat_tensors.size(0), dim=0)
 
         #einops equivalent
         stacked_pos_enc_tensor = einops.repeat(positional_encoding_tensor.unsqueeze(0), '() p e -> b p e', b=patched_image_tensors.size(0))
 
 
-        patch_embeddings = torch.add(cls_token_concat_tensors, stacked_pos_enc_tensor)
+        patch_embeddings = torch.add(cls_register_token_concat_tensors, stacked_pos_enc_tensor)
 
         return patch_embeddings
 

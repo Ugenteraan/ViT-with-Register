@@ -38,6 +38,7 @@ MODEL = VisionTransformer(image_height=cfg.IMAGE_HEIGHT,
                           patch_size=cfg.PATCH_SIZE,
                           transformer_network_depth=cfg.TRANSFORMER_NETWORK_DEPTH,
                           num_classes=cfg.NUM_CLASSES,
+                          register_token_len=cfg.REGISTER_TOKEN_LEN,
                           projection_dim_keys=cfg.PROJECTION_DIM_KEYS,
                           projection_dim_values=cfg.PROJECTION_DIM_VALUES,
                           num_heads=cfg.NUM_HEADS,
@@ -62,7 +63,7 @@ TEST_DATALOADER = DataLoader(TEST_DATASET, batch_size=cfg.BATCH_SIZE, shuffle=cf
 
 
 #parameter logging for neptune.
-NEPTUNE_PARAMS = {"dataset":"bdd100k weather classification", "model":"vanilla-ViT", "learning_rate": cfg.LEARNING_RATE, "optimizer": "Adam", "scheduler":"StepLR", "step_size":cfg.SCHEDULER_STEP_SIZE, "scheduler_gamma":cfg.SCHEDULER_GAMMA, "batch_size":cfg.BATCH_SIZE, "total_epoch":cfg.TRAIN_EPOCH, "image_height":cfg.IMAGE_HEIGHT, "image_width":cfg.IMAGE_WIDTH, "image_channel":cfg.IMAGE_CHANNEL, "patch_size":cfg.PATCH_SIZE, "data_shuffle":cfg.SHUFFLE, "transformer_depth":cfg.TRANSFORMER_NETWORK_DEPTH, "attention_dropout":cfg.ATTN_DROPOUT_PROB, "num_heads":cfg.NUM_HEADS,  "mlp_head_dropout":cfg.FEEDFORWARD_DROPOUT_PROB}
+NEPTUNE_PARAMS = {"dataset":"bdd100k weather classification", "model":"vanilla-ViT-with-registers", "learning_rate": cfg.LEARNING_RATE, "optimizer": "Adam", "scheduler":"StepLR", "step_size":cfg.SCHEDULER_STEP_SIZE, "scheduler_gamma":cfg.SCHEDULER_GAMMA, "batch_size":cfg.BATCH_SIZE, "total_epoch":cfg.TRAIN_EPOCH, "image_height":cfg.IMAGE_HEIGHT, "image_width":cfg.IMAGE_WIDTH, "image_channel":cfg.IMAGE_CHANNEL, "patch_size":cfg.PATCH_SIZE, "data_shuffle":cfg.SHUFFLE, "transformer_depth":cfg.TRANSFORMER_NETWORK_DEPTH, "attention_dropout":cfg.ATTN_DROPOUT_PROB, "num_heads":cfg.NUM_HEADS,  "mlp_head_dropout":cfg.FEEDFORWARD_DROPOUT_PROB}
 
 NEPTUNE_CLIENT['parameters'] = NEPTUNE_PARAMS
 
